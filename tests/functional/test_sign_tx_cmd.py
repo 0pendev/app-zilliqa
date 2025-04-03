@@ -1,6 +1,7 @@
 from ragger.backend import SpeculosBackend
 from ragger.backend.interface import RaisePolicy
 from ragger.bip import calculate_public_key_and_chaincode, CurveChoice
+from ragger.error import ExceptionRAPDU
 
 from ragger.navigator import NavInsID
 
@@ -27,22 +28,26 @@ def check_signature(client, backend, message, response):
         public_key = bytes.fromhex(ref_public_key)
     else:
         response = client.send_get_public_key_non_confirm(ZILLIQA_KEY_INDEX)
-        public_key, address = client.parse_get_public_key_response(response.data)
+        public_key, _ = client.parse_get_public_key_response(response.data)
 
     client.verify_signature(message, response, public_key)
 
 
-def check_transaction(test_name, backend, navigator, transaction, instructions):
+def check_transaction(test_name, firmware, backend, navigator, transaction, instructions, scenario_navigator):
     client = ZilliqaClient(backend)
     with client.send_async_sign_transaction_message(ZILLIQA_KEY_INDEX, transaction):
-        navigator.navigate_and_compare(ROOT_SCREENSHOT_PATH,
-                                       test_name,
-                                       instructions)
+        if firmware.is_nano:
+            navigator.navigate_and_compare(ROOT_SCREENSHOT_PATH,
+                                        test_name,
+                                        instructions)
+        else:
+            scenario_navigator.review_approve(ROOT_SCREENSHOT_PATH, test_name)
+
     response = client.get_async_response().data
     check_signature(client, backend, transaction, response)
 
 
-def test_sign_tx_simple_accepted(test_name, firmware, backend, navigator):
+def test_sign_tx_simple_accepted(test_name, firmware, backend, navigator, scenario_navigator):
     senderpubkey = ByteArray(data=bytes.fromhex("0205273e54f262f8717a687250591dcfb5755b8ce4e3bd340c7abefd0de1276574"))
     toaddr = bytes.fromhex("8AD0357EBB5515F694DE597EDA6F3F6BDBAD0FD9")
     amount = ByteArray(data=(zil_to_qa(1.1)).to_bytes(16, byteorder='big'))
@@ -65,10 +70,10 @@ def test_sign_tx_simple_accepted(test_name, firmware, backend, navigator):
         instructions = get_nano_review_instructions(4)
     else:
         instructions = get_fat_review_instructions(2)
-    check_transaction(test_name, backend, navigator, transaction, instructions)
+    check_transaction(test_name, firmware, backend, navigator, transaction, instructions, scenario_navigator)
 
 
-def test_sign_tx_simple_refused(test_name, firmware, backend, navigator):
+def test_sign_tx_simple_refused(test_name, firmware, backend, navigator, scenario_navigator):
     senderpubkey = ByteArray(data=bytes.fromhex("0205273e54f262f8717a687250591dcfb5755b8ce4e3bd340c7abefd0de1276574"))
     toaddr = bytes.fromhex("8AD0357EBB5515F694DE597EDA6F3F6BDBAD0FD9")
     amount = ByteArray(data=(zil_to_qa(1.1)).to_bytes(16, byteorder='big'))
@@ -97,24 +102,14 @@ def test_sign_tx_simple_refused(test_name, firmware, backend, navigator):
         assert rapdu.status == ErrorType.SW_USER_REJECTED
         assert len(rapdu.data) == 0
     else:
-        instructions_set = []
-        for i in range(3):
-            instructions_set.append([NavInsID.USE_CASE_REVIEW_TAP] * i +
-                                    [NavInsID.USE_CASE_REVIEW_REJECT] +
-                                    [NavInsID.USE_CASE_CHOICE_CONFIRM] +
-                                    [NavInsID.USE_CASE_STATUS_DISMISS])
-        for i, instructions in enumerate(instructions_set):
+        try:
             with client.send_async_sign_transaction_message(ZILLIQA_KEY_INDEX, transaction):
-                backend.raise_policy = RaisePolicy.RAISE_NOTHING
-                navigator.navigate_and_compare(ROOT_SCREENSHOT_PATH,
-                                               test_name + f"/part{i}",
-                                               instructions)
-            rapdu = client.get_async_response()
-            assert rapdu.status == ErrorType.SW_USER_REJECTED
-            assert len(rapdu.data) == 0
+                scenario_navigator.review_reject(ROOT_SCREENSHOT_PATH)
+        except ExceptionRAPDU as e:
+            assert e.status == ErrorType.SW_USER_REJECTED
 
 
-def test_sign_tx_data_accepted(test_name, firmware, backend, navigator):
+def test_sign_tx_data_accepted(test_name, firmware, backend, navigator, scenario_navigator):
     senderpubkey = ByteArray(data=bytes.fromhex("0205273e54f262f8717a687250591dcfb5755b8ce4e3bd340c7abefd0de1276574"))
     toaddr = bytes.fromhex("8AD0357EBB5515F694DE597EDA6F3F6BDBAD0FD9")
     amount = ByteArray(data=(zil_to_qa(1.1)).to_bytes(16, byteorder='big'))
@@ -138,10 +133,10 @@ def test_sign_tx_data_accepted(test_name, firmware, backend, navigator):
         instructions = get_nano_review_instructions(5)
     else:
         instructions = get_fat_review_instructions(3)
-    check_transaction(test_name, backend, navigator, transaction, instructions)
+    check_transaction(test_name, firmware, backend, navigator, transaction, instructions, scenario_navigator)
 
 
-def test_sign_tx_code_accepted(test_name, firmware, backend, navigator):
+def test_sign_tx_code_accepted(test_name, firmware, backend, navigator, scenario_navigator):
 
     senderpubkey = ByteArray(data=bytes.fromhex("0205273e54f262f8717a687250591dcfb5755b8ce4e3bd340c7abefd0de1276574"))
     toaddr = bytes.fromhex("8AD0357EBB5515F694DE597EDA6F3F6BDBAD0FD9")
@@ -166,4 +161,4 @@ def test_sign_tx_code_accepted(test_name, firmware, backend, navigator):
         instructions = get_nano_review_instructions(6)
     else:
         instructions = get_fat_review_instructions(3)
-    check_transaction(test_name, backend, navigator, transaction, instructions)
+    check_transaction(test_name, firmware, backend, navigator, transaction, instructions, scenario_navigator)
