@@ -23,6 +23,7 @@
  * and modified to include the function `bech32_addr_encode`.
  */
 
+#include <cx.h>
 #include <os.h>
 #include <string.h>
 

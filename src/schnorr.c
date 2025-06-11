@@ -1,5 +1,6 @@
 #include <string.h>
 
+#include <libcxng.h>
 #include "schnorr.h"
 #include "zilliqa.h"
 

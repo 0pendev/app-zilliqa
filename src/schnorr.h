@@ -24,8 +24,9 @@ limitations under the License.
 // => 30 ..  02 03  01 02 03         02 03 00 81 02 03
 //
 
-#include <os.h>
+#include <libcxng.h>
 #include <cx.h>
+#include <os.h>
 
 typedef struct  {
     cx_sha256_t H;         // partial hash.

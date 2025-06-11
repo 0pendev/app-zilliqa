@@ -335,7 +335,9 @@ void io_seproxyhal_display(const bagl_element_t *element) {
 }
 #endif  // HAVE_BAGL
 
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
 unsigned char G_io_seproxyhal_spi_buffer[IO_SEPROXYHAL_BUFFER_SIZE_B];
+#endif
 
 unsigned char io_event(unsigned char channel) {
 	UNUSED(channel);
@@ -415,6 +417,7 @@ static void app_exit(void) {
 	END_TRY_L(exit);
 }
 
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
 __attribute__((section(".boot"))) int main(void) {
 	// exit critical section
 	__asm volatile("cpsie i");
@@ -453,3 +456,4 @@ __attribute__((section(".boot"))) int main(void) {
 	app_exit();
 	return 0;
 }
+#endif

@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "libcxng.h"
 #include "os.h"
 #include "os_io_seproxyhal.h"
 #include "zilliqa.h"

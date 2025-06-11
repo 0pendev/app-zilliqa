@@ -9,3 +9,9 @@ tests/unit-tests/qatozil/*.o.d
 tests/unit-tests/qatozil/qatozil
 
 scan-build/
+#
+# Fuzzing
+fuzzing/build/
+fuzzing/corpus/
+fuzzing/out/
+fuzzing/macros/generated/
