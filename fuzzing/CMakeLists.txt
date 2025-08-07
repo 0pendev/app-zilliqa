@@ -39,10 +39,11 @@ target_include_directories(ziliqa PUBLIC
   ${CMAKE_SOURCE_DIR}/../src/transaction
   ${CMAKE_SOURCE_DIR}/../src/ui
   ${CMAKE_SOURCE_DIR}/../src/ui/action
+  ${CMAKE_SOURCE_DIR}/
 )
 target_link_libraries(ziliqa PUBLIC
   secure_sdk
-  bsd
+  # bsd
 )
 target_compile_definitions(ziliqa PUBLIC
   ${DEFINES}
@@ -53,7 +54,7 @@ target_compile_options(ziliqa PUBLIC ${COMPILATION_FLAGS} -Wno-implicit-function
 
 # fuzz_handlerfn
 add_executable(fuzz_handlerfn
-  "${CMAKE_SOURCE_DIR}/fuzz_handlerfn.c"
+  "${CMAKE_SOURCE_DIR}/harness/fuzz_handlerfn.c"
   "${CMAKE_SOURCE_DIR}/mock/mocks.c"
 )
 
@@ -61,3 +62,14 @@ target_compile_definitions(fuzz_handlerfn PUBLIC macros FUZZING_BUILD_MODE_UNSAF
 target_compile_options(fuzz_handlerfn PUBLIC ${COMPILATION_FLAGS})
 target_link_options(fuzz_handlerfn PUBLIC -Wl,--undefined=lookupHandler ${LINK_FLAGS})
 target_link_libraries(fuzz_handlerfn PUBLIC ziliqa mock)
+
+# fuzz_handlerfn_loop
+add_executable(fuzz_handlerfn_loop
+  "${CMAKE_SOURCE_DIR}/harness/fuzz_handlerfn_loop.c"
+  "${CMAKE_SOURCE_DIR}/mock/mocks.c"
+)
+
+target_compile_definitions(fuzz_handlerfn_loop PUBLIC macros FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION)
+target_compile_options(fuzz_handlerfn_loop PUBLIC ${COMPILATION_FLAGS})
+target_link_options(fuzz_handlerfn_loop PUBLIC -Wl,--undefined=lookupHandler ${LINK_FLAGS})
+target_link_libraries(fuzz_handlerfn_loop PUBLIC ziliqa mock)

@@ -12,6 +12,7 @@ try_context_t fuzz_exit_try_ctx = {0};
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
 #message "Use this macro for code only needed in fuzz targets"
 #endif
+uint8_t apdu_size_g;
 
 // Fuzz entry point
 int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
